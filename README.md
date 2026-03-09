@@ -275,6 +275,33 @@ await sdk.updateProduct("product-id", {
 await sdk.deleteProduct("product-id");
 ```
 
+### Key Pool (Unique Keys Per Customer)
+
+```javascript
+// Upload unique keys/codes to a product's pool
+const result = await sdk.addProductKeys("product-id", [
+  "LICENSE-AAAA-0001",
+  "LICENSE-AAAA-0002",
+  "LICENSE-AAAA-0003",
+], "January Batch");
+console.log(`Added ${result.data.added} keys`);
+
+// Check pool stats
+const stats = await sdk.getKeyPoolStats("product-id");
+console.log(`${stats.data.available} keys available`);
+
+// List keys (with optional status filter)
+const keys = await sdk.listProductKeys("product-id", {
+  status: "AVAILABLE",
+  limit: 20,
+});
+
+// Remove all available (unassigned) keys
+await sdk.removeAvailableKeys("product-id");
+```
+
+> When a customer purchases the product, one key is automatically assigned (FIFO) and delivered alongside the product's digital content.
+
 ## 🔔 Webhook Handling
 
 ### Configure Webhooks
@@ -693,6 +720,10 @@ try {
 | `listProducts()`      | List all products             | `GET /v1/store/manage/products`             |
 | `updateProduct()`     | Update a product              | `PUT /v1/store/manage/products/{id}`        |
 | `deleteProduct()`     | Delete (deactivate) a product | `DELETE /v1/store/manage/products/{id}`     |
+| `addProductKeys()`    | Upload keys to product pool   | `POST /v1/store/manage/products/{id}/keys`  |
+| `listProductKeys()`   | List keys in pool             | `GET /v1/store/manage/products/{id}/keys`   |
+| `getKeyPoolStats()`   | Get pool stats                | `GET /v1/store/manage/products/{id}/keys/stats` |
+| `removeAvailableKeys()` | Remove available keys       | `DELETE /v1/store/manage/products/{id}/keys` |
 | `listOrders()`        | List store orders             | `GET /v1/store/manage/orders`              |
 | `getOrder()`          | Get order details             | `GET /v1/store/manage/orders/{id}`         |
 | `updateOrderStatus()` | Update order status           | `PUT /v1/store/manage/orders/{id}/status`  |

@@ -279,6 +279,64 @@ export interface OrderListResponse {
   };
 }
 
+// ==================== KEY POOL INTERFACES ====================
+
+export interface AddKeysRequest {
+  keys: string[];
+  label?: string;
+}
+
+export interface AddKeysResponse {
+  success: boolean;
+  data: {
+    added: number;
+    duplicates: number;
+  };
+  message: string;
+}
+
+export interface ProductKey {
+  id: string;
+  keyValue: string;
+  label: string | null;
+  status: "AVAILABLE" | "ASSIGNED" | "REVOKED";
+  orderId: string | null;
+  assignedAt: string | null;
+  createdAt: string;
+}
+
+export interface KeyListResponse {
+  success: boolean;
+  data: {
+    keys: ProductKey[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      pages: number;
+    };
+  };
+}
+
+export interface KeyPoolStatsResponse {
+  success: boolean;
+  data: {
+    available: number;
+    assigned: number;
+    revoked: number;
+    total: number;
+    useKeyPool: boolean;
+  };
+}
+
+export interface RemoveKeysResponse {
+  success: boolean;
+  data: {
+    removed: number;
+  };
+  message: string;
+}
+
 // ==================== WEBHOOK INTERFACES ====================
 
 export interface WebhookConfig {
@@ -653,6 +711,66 @@ export class PaymentSDK {
     );
   }
 
+  // ==================== KEY POOL METHODS ====================
+
+  /**
+   * Add unique keys/codes to a product's key pool.
+   * Each customer gets one unique key on purchase (FIFO).
+   */
+  async addProductKeys(
+    productId: string,
+    keys: string[],
+    label?: string
+  ): Promise<AddKeysResponse> {
+    return await this.request<AddKeysResponse>(
+      "POST",
+      `/v1/store/manage/products/${productId}/keys`,
+      { keys, ...(label && { label }) }
+    );
+  }
+
+  /**
+   * List keys in a product's key pool with optional status filter.
+   */
+  async listProductKeys(
+    productId: string,
+    params?: { page?: number; limit?: number; status?: "AVAILABLE" | "ASSIGNED" | "REVOKED" }
+  ): Promise<KeyListResponse> {
+    const queryParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          queryParams.append(key, value.toString());
+        }
+      });
+    }
+    const query = queryParams.toString();
+    return await this.request<KeyListResponse>(
+      "GET",
+      `/v1/store/manage/products/${productId}/keys${query ? `?${query}` : ""}`
+    );
+  }
+
+  /**
+   * Get key pool statistics for a product.
+   */
+  async getKeyPoolStats(productId: string): Promise<KeyPoolStatsResponse> {
+    return await this.request<KeyPoolStatsResponse>(
+      "GET",
+      `/v1/store/manage/products/${productId}/keys/stats`
+    );
+  }
+
+  /**
+   * Remove all available (unassigned) keys from a product's pool.
+   */
+  async removeAvailableKeys(productId: string): Promise<RemoveKeysResponse> {
+    return await this.request<RemoveKeysResponse>(
+      "DELETE",
+      `/v1/store/manage/products/${productId}/keys`
+    );
+  }
+
   /**
    * List orders for your store
    */
@@ -917,7 +1035,7 @@ export class PaymentSDK {
   }
 
   static getVersion(): string {
-    return "1.1.1";
+    return "1.2.0";
   }
 
   getApiKeyPreview(): string {
