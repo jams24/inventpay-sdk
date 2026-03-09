@@ -4,12 +4,13 @@
 ![Version](https://img.shields.io/npm/v/inventpay)
 ![License](https://img.shields.io/npm/l/inventpay)
 
-The official JavaScript/TypeScript SDK for [InventPay](https://inventpay.io) - Accept crypto payments, manage withdrawals, and handle real-time notifications with ease.
+The official JavaScript/TypeScript SDK for [InventPay](https://inventpay.io) - Accept crypto payments, manage stores, handle withdrawals, and receive real-time notifications with ease.
 
 ## ✨ Features
 
 - 💳 **Accept Crypto Payments** - Bitcoin, Ethereum, Litecoin, USDT (ERC20 & BEP20)
-- 🔄 **Withdrawal Management** - Withdraw funds to any wallet address
+- 🏪 **Store Management** - Create storefronts, add digital products, manage orders
+- 🔄 **Secure Withdrawals** - Withdraw funds with a dedicated withdrawal API key
 - 💰 **Balance Tracking** - Real-time balance and limit monitoring
 - 🔔 **Webhook Support** - Secure payment notifications and event handling
 - 🎯 **Dual Payment Modes** - Fixed currency or multi-currency invoices
@@ -39,6 +40,7 @@ import { PaymentSDK, PaymentRequest } from "inventpay";
 // Initialize with your API key
 const sdk = new PaymentSDK({
   apiKey: "your-api-key-here", // Get from https://inventpay.io/dashboard
+  withdrawalApiKey: "wk_live_...", // Optional — for programmatic withdrawals
   baseUrl: "https://api.inventpay.io", // Optional
   timeout: 30000, // Optional, defaults to 30 seconds
 });
@@ -158,6 +160,19 @@ console.log(balance.data);
 
 ## 🔄 Withdraw Funds
 
+Programmatic withdrawals require a **Withdrawal API Key** — a separate key from your main API key, disabled by default for security.
+
+1. Go to **Dashboard → Settings → Withdrawal API Key**
+2. Click **"Generate Key"** to create your `wk_live_...` key
+3. Pass it when initializing the SDK:
+
+```javascript
+const sdk = new PaymentSDK({
+  apiKey: process.env.INVENTPAY_API_KEY,
+  withdrawalApiKey: process.env.INVENTPAY_WITHDRAWAL_KEY,
+});
+```
+
 ### Create Withdrawal
 
 ```javascript
@@ -176,19 +191,88 @@ console.log(withdrawal.data);
 //   destinationAddress: '0x1E3D6848dE165e64052f0F2A3dA8823A27CAc22D',
 //   status: 'PENDING',
 //   feeAmount: '0.051',
-//   metadata: {
-//     netAmount: 9.949,
-//     networkFee: 0.001,
-//     serviceFee: 0.05
-//   }
+//   netAmount: '9.949',
+//   feeBreakdown: { networkFee: 0.001, serviceFee: 0.05 },
+//   estimatedCompletion: '2024-01-01T12:30:00.000Z'
 // }
 ```
+
+> **Note:** If `withdrawalApiKey` is not provided, `createWithdrawal()` will throw a `PaymentSDKError`. Dashboard withdrawals use 2FA instead and do not need this key.
 
 ### Check Withdrawal Status
 
 ```javascript
 const withdrawalStatus = await sdk.getWithdrawal("cmh789...");
 console.log(withdrawalStatus.data.status); // PENDING, PROCESSING, COMPLETED, FAILED
+```
+
+## 🏪 Store Management
+
+Create and manage digital storefronts with products and orders.
+
+### Create a Store
+
+```javascript
+const store = await sdk.createStore({
+  name: "My Digital Shop",
+  description: "Premium digital products",
+  settings: {
+    acceptedCurrencies: ["USDT_BEP20", "BTC", "ETH"],
+    minOrderAmount: 1,
+  },
+});
+
+console.log(store.data.slug); // "my-digital-shop"
+```
+
+### Add Products
+
+```javascript
+const product = await sdk.createProduct({
+  name: "Premium Template Pack",
+  description: "50+ professional templates",
+  price: 29.99,
+  currency: "USD",
+  stock: 100,
+  digitalContent: {
+    fileUrl: "https://yourstorage.com/templates.zip",
+    instructions: "Download link valid for 24 hours",
+  },
+});
+```
+
+### List Products
+
+```javascript
+const products = await sdk.listProducts({ page: 1, limit: 20 });
+console.log(products.data.products); // Array of products
+console.log(products.data.pagination.total); // Total product count
+```
+
+### Manage Orders
+
+```javascript
+// List orders
+const orders = await sdk.listOrders({ status: "PAID", limit: 10 });
+
+// Get order details
+const order = await sdk.getOrder("order-id");
+
+// Update order fulfillment status
+await sdk.updateOrderStatus("order-id", "FULFILLED");
+```
+
+### Update & Delete Products
+
+```javascript
+// Update a product
+await sdk.updateProduct("product-id", {
+  price: 24.99,
+  stock: 50,
+});
+
+// Delete (deactivate) a product
+await sdk.deleteProduct("product-id");
 ```
 
 ## 🔔 Webhook Handling
@@ -576,17 +660,42 @@ try {
 
 ## 📚 API Reference
 
-### Core Methods
+### Payment Methods
+
+| Method               | Description                   | Endpoint                      |
+| -------------------- | ----------------------------- | ----------------------------- |
+| `createPayment()`    | Create fixed currency payment | `POST /v1/create_payment`     |
+| `createInvoice()`    | Create multi-currency invoice | `POST /v1/create_invoice`     |
+| `getPaymentStatus()` | Check payment status          | `GET /v1/invoice/{id}/status` |
+
+### Balance Methods
 
 | Method                 | Description                   | Endpoint                              |
 | ---------------------- | ----------------------------- | ------------------------------------- |
-| `createPayment()`      | Create fixed currency payment | `POST /v1/create_payment`             |
-| `createInvoice()`      | Create multi-currency invoice | `POST /v1/create_invoice`             |
-| `getPaymentStatus()`   | Check payment status          | `GET /v1/invoice/{id}/status`         |
 | `getBalances()`        | Get all currency balances     | `GET /v1/merchant/balance`            |
 | `getBalance(currency)` | Get specific currency balance | `GET /v1/merchant/balance/{currency}` |
-| `createWithdrawal()`   | Create withdrawal             | `POST /v1/merchant/withdrawal/create` |
-| `getWithdrawal()`      | Get withdrawal status         | `GET /v1/withdrawal/{id}`             |
+
+### Withdrawal Methods
+
+| Method               | Description                        | Endpoint                              |
+| -------------------- | ---------------------------------- | ------------------------------------- |
+| `createWithdrawal()` | Create withdrawal (requires key)   | `POST /v1/merchant/withdrawal/create` |
+| `getWithdrawal()`    | Get withdrawal status              | `GET /v1/withdrawal/{id}`             |
+
+### Store Methods
+
+| Method                | Description                   | Endpoint                                    |
+| --------------------- | ----------------------------- | ------------------------------------------- |
+| `createStore()`       | Create a new store            | `POST /v1/store/manage`                     |
+| `getStore()`          | Get store details             | `GET /v1/store/manage`                      |
+| `updateStore()`       | Update store settings         | `PUT /v1/store/manage`                      |
+| `createProduct()`     | Add a product                 | `POST /v1/store/manage/products`            |
+| `listProducts()`      | List all products             | `GET /v1/store/manage/products`             |
+| `updateProduct()`     | Update a product              | `PUT /v1/store/manage/products/{id}`        |
+| `deleteProduct()`     | Delete (deactivate) a product | `DELETE /v1/store/manage/products/{id}`     |
+| `listOrders()`        | List store orders             | `GET /v1/store/manage/orders`              |
+| `getOrder()`          | Get order details             | `GET /v1/store/manage/orders/{id}`         |
+| `updateOrderStatus()` | Update order status           | `PUT /v1/store/manage/orders/{id}/status`  |
 
 ### Webhook Methods
 
@@ -606,6 +715,7 @@ try {
 ```javascript
 const sdk = new PaymentSDK({
   apiKey: "string", // Required: Your InventPay API key
+  withdrawalApiKey: "string", // Optional: For programmatic withdrawals (wk_live_...)
   baseUrl: "string", // Optional: API base URL (default: https://api.inventpay.io)
   timeout: 30000, // Optional: Request timeout in ms (default: 30000)
 });
@@ -638,6 +748,7 @@ const sdk = new PaymentSDK({
 // Use environment variables
 const sdk = new PaymentSDK({
   apiKey: process.env.INVENTPAY_API_KEY,
+  withdrawalApiKey: process.env.INVENTPAY_WITHDRAWAL_KEY, // Only if needed
 });
 ```
 
@@ -764,7 +875,7 @@ Expired payments cannot be completed. You should create a new payment and notify
 - **Documentation:** [https://docs.inventpay.io](https://docs.inventpay.io)
 - **Dashboard:** [https://inventpay.io/dashboard](https://inventpay.io/dashboard)
 - **Email Support:** support@inventpay.io
-- **GitHub Issues:** [Report Bugs & Features](https://github.com/inventpay/inventpay-sdk-js/issues)
+- **GitHub Issues:** [Report Bugs & Features](https://github.com/jams24/inventpay-sdk/issues)
 
 ## 📄 License
 
