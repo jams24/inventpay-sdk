@@ -199,6 +199,8 @@ export interface CreateProductRequest {
   images?: string[];
   stock?: number;
   digitalContent?: DigitalContent;
+  contentType?: "GENERAL" | "SKILL";
+  skillContent?: string;
 }
 
 export interface UpdateProductRequest {
@@ -210,6 +212,8 @@ export interface UpdateProductRequest {
   stock?: number;
   isActive?: boolean;
   digitalContent?: DigitalContent;
+  contentType?: "GENERAL" | "SKILL";
+  skillContent?: string;
 }
 
 export interface ProductResponse {
