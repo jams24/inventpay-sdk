@@ -1,6 +1,6 @@
 {
   "name": "inventpay",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Official JavaScript/TypeScript SDK for InventPay Payment API",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
