@@ -49,7 +49,7 @@ Creates a new payment.
 ```typescript
 {
   amount: number;              // Payment amount
-  currency: string;            // 'BTC' | 'ETH' | 'LTC' | 'USDT_ERC20' | 'USDT_BEP20' | 'MULTI'
+  currency: string;            // 'BTC' | 'ETH' | 'LTC' | 'USDT_ERC20' | 'USDT_BEP20' | 'SOL' | 'USDC_SOL' | 'USDC_BEP20' | 'MULTI'
   orderId?: string;            // Optional unique order ID
   description?: string;        // Optional description
   callbackUrl?: string;        // Optional webhook URL
@@ -191,7 +191,7 @@ Creates a withdrawal request.
 ```typescript
 {
   amount: number;                // Withdrawal amount
-  currency: string;              // 'BTC' | 'ETH' | 'LTC' | 'USDT_ERC20' | 'USDT_BEP20'
+  currency: string;              // 'BTC' | 'ETH' | 'LTC' | 'USDT_ERC20' | 'USDT_BEP20' | 'SOL' | 'USDC_SOL' | 'USDC_BEP20'
   destinationAddress: string;    // Destination wallet address
   description?: string;          // Optional description
 }

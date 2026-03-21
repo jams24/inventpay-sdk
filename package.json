@@ -31,7 +31,9 @@
     "inventpay",
     "digital-products",
     "storefront",
-    "withdrawal"
+    "withdrawal",
+    "solana",
+    "usdc"
   ],
   "author": "InventPay",
   "license": "MIT",

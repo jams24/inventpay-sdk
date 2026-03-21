@@ -8,7 +8,7 @@ The official JavaScript/TypeScript SDK for [InventPay](https://inventpay.io) - A
 
 ## ✨ Features
 
-- 💳 **Accept Crypto Payments** - Bitcoin, Ethereum, Litecoin, USDT (ERC20 & BEP20)
+- 💳 **Accept Crypto Payments** - Bitcoin, Ethereum, Litecoin, Solana, USDT (ERC20 & BEP20), USDC
 - 🏪 **Store Management** - Create storefronts, add digital products, manage orders
 - 🔄 **Secure Withdrawals** - Withdraw funds with a dedicated withdrawal API key
 - 💰 **Balance Tracking** - Real-time balance and limit monitoring
@@ -761,6 +761,9 @@ const sdk = new PaymentSDK({
 - `LTC` - Litecoin
 - `USDT_ERC20` - USDT on Ethereum
 - `USDT_BEP20` - USDT on Binance Smart Chain
+- `SOL` - Solana
+- `USDC_SOL` - USDC on Solana
+- `USDC_BEP20` - USDC on Binance Smart Chain
 - `MULTI` - Multi-currency invoice
 
 **Amount Currencies:**
@@ -770,6 +773,7 @@ const sdk = new PaymentSDK({
 - `BTC` - Bitcoin
 - `ETH` - Ethereum
 - `LTC` - Litecoin
+- `SOL` - Solana
 
 ## 🌟 Best Practices
 

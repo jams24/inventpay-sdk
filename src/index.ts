@@ -13,8 +13,8 @@ export interface SDKConfig {
 
 export interface PaymentRequest {
   amount: number;
-  amountCurrency?: "USD" | "USDT" | "BTC" | "LTC" | "ETH";
-  currency?: "BTC" | "LTC" | "ETH" | "USDT_ERC20" | "USDT_BEP20" | "MULTI";
+  amountCurrency?: "USD" | "USDT" | "BTC" | "LTC" | "ETH" | "SOL";
+  currency?: "BTC" | "LTC" | "ETH" | "USDT_ERC20" | "USDT_BEP20" | "SOL" | "USDC_SOL" | "USDC_BEP20" | "MULTI";
   orderId?: string;
   description?: string;
   callbackUrl?: string;
@@ -23,7 +23,7 @@ export interface PaymentRequest {
 
 export interface InvoiceRequest {
   amount: number;
-  amountCurrency?: "USD" | "USDT" | "BTC" | "LTC" | "ETH";
+  amountCurrency?: "USD" | "USDT" | "BTC" | "LTC" | "ETH" | "SOL";
   orderId?: string;
   description?: string;
   callbackUrl?: string;
@@ -77,7 +77,7 @@ export interface PaymentResponse {
 
 export interface WithdrawalRequest {
   amount: number;
-  currency: "BTC" | "LTC" | "ETH" | "USDT_ERC20" | "USDT_BEP20";
+  currency: "BTC" | "LTC" | "ETH" | "USDT_ERC20" | "USDT_BEP20" | "SOL" | "USDC_SOL" | "USDC_BEP20";
   destinationAddress: string;
   description?: string;
 }
