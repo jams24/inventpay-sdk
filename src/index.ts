@@ -4,6 +4,48 @@
  * Uses X-API-Key authentication for all requests
  */
 
+/**
+ * A settlement currency the API can receive.
+ *
+ * Note XMR is only available when the API deployment has a Monero wallet
+ * configured — unlike the other currencies, it cannot be derived from the
+ * master seed alone. Call `getSupportedCurrencies()` to find out what a given
+ * deployment actually accepts rather than assuming this whole union.
+ */
+export type Currency =
+  | "BTC"
+  | "LTC"
+  | "ETH"
+  | "XMR"
+  | "USDT_ERC20"
+  | "USDT_BEP20"
+  | "SOL"
+  | "USDC_SOL"
+  | "USDC_BEP20";
+
+/** A currency an amount can be denominated in before conversion. */
+export type AmountCurrency = "USD" | "USDT" | "BTC" | "LTC" | "ETH" | "SOL" | "XMR";
+
+/** Display metadata for a currency, as returned by `getSupportedCurrencies()`. */
+export interface CurrencyInfo {
+  code: Currency;
+  name: string;
+  symbol: string;
+  network: string;
+  /** The chain's native precision (XMR is 12 — piconero). */
+  decimals: number;
+  /** What a UI should actually render. */
+  displayDecimals: number;
+  /** Confirmations before the payment settles. For XMR this is a consensus rule. */
+  minConfirmations: number;
+  isStablecoin: boolean;
+}
+
+export interface SupportedCurrenciesResponse {
+  success: boolean;
+  currencies: CurrencyInfo[];
+}
+
 export interface SDKConfig {
   apiKey: string;
   withdrawalApiKey?: string;
@@ -13,8 +55,8 @@ export interface SDKConfig {
 
 export interface PaymentRequest {
   amount: number;
-  amountCurrency?: "USD" | "USDT" | "BTC" | "LTC" | "ETH" | "SOL";
-  currency?: "BTC" | "LTC" | "ETH" | "USDT_ERC20" | "USDT_BEP20" | "SOL" | "USDC_SOL" | "USDC_BEP20" | "MULTI";
+  amountCurrency?: AmountCurrency;
+  currency?: Currency | "MULTI";
   orderId?: string;
   description?: string;
   callbackUrl?: string;
@@ -23,7 +65,7 @@ export interface PaymentRequest {
 
 export interface InvoiceRequest {
   amount: number;
-  amountCurrency?: "USD" | "USDT" | "BTC" | "LTC" | "ETH" | "SOL";
+  amountCurrency?: AmountCurrency;
   orderId?: string;
   description?: string;
   callbackUrl?: string;
@@ -77,7 +119,7 @@ export interface PaymentResponse {
 
 export interface WithdrawalRequest {
   amount: number;
-  currency: "BTC" | "LTC" | "ETH" | "USDT_ERC20" | "USDT_BEP20" | "SOL" | "USDC_SOL" | "USDC_BEP20";
+  currency: Currency;
   destinationAddress: string;
   description?: string;
 }
@@ -548,6 +590,26 @@ export class PaymentSDK {
         error
       );
     }
+  }
+
+  // ==================== CURRENCY METHODS ====================
+
+  /**
+   * The currencies this API deployment actually accepts, with display metadata.
+   *
+   * Prefer this over assuming the whole `Currency` union: XMR is only offered
+   * when the deployment has a Monero wallet configured, so a hardcoded list can
+   * present a currency the API will then reject.
+   *
+   * Public — no API key required.
+   */
+  async getSupportedCurrencies(): Promise<SupportedCurrenciesResponse> {
+    return await this.request<SupportedCurrenciesResponse>(
+      "GET",
+      "/v1/currencies",
+      undefined,
+      false
+    );
   }
 
   // ==================== PAYMENT METHODS ====================

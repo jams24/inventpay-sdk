@@ -54,6 +54,39 @@ const connection = await sdk.testConnection();
 console.log(connection.message); // "API connection successful"
 ```
 
+## 🪙 Supported Currencies
+
+`BTC`, `LTC`, `ETH`, `XMR`, `SOL`, `USDT_ERC20`, `USDT_BEP20`, `USDC_SOL`, `USDC_BEP20`
+
+**Monero is conditional.** Unlike the others it cannot be derived from the
+master seed — it needs a Monero wallet on the API side — so it is only offered
+on deployments that have one configured. Ask the API rather than hardcoding a
+list, or you may present a currency it will reject:
+
+```typescript
+const { currencies } = await sdk.getSupportedCurrencies();
+
+currencies.forEach((c) => {
+  console.log(`${c.code}: ${c.name} on ${c.network}`);
+  console.log(`  render to ${c.displayDecimals} dp (chain has ${c.decimals})`);
+  console.log(`  settles after ${c.minConfirmations} confirmations`);
+});
+
+const acceptsMonero = currencies.some((c) => c.code === "XMR");
+```
+
+This endpoint is public — no API key required.
+
+### Notes on XMR
+
+- **12 decimals on-chain** (piconero). Render 6; keep full precision in storage.
+- **10 confirmations, always.** That is Monero's consensus unlock, not a risk
+  policy — the funds are literally unspendable until then, so expect roughly 20
+  minutes before settlement.
+- **No block explorer.** Monero's stealth addresses mean no third party can
+  look up a payment by address. Verification uses the transaction key the API
+  records for each withdrawal.
+
 ## 💳 Accepting Payments
 
 ### Option 1: Fixed Currency Payment
@@ -64,7 +97,7 @@ Get an immediate payment address for a specific cryptocurrency.
 const payment = await sdk.createPayment({
   amount: 29.99, // Amount in USD
   amountCurrency: "USD", // Base currency for amount
-  currency: "USDT_BEP20", // Payment currency: BTC, ETH, LTC, USDT_ERC20, USDT_BEP20
+  currency: "USDT_BEP20", // BTC, ETH, LTC, XMR, SOL, USDT_ERC20, USDT_BEP20, USDC_SOL, USDC_BEP20
   orderId: "order-12345",
   description: "Premium Plan Subscription",
   callbackUrl: "https://yourapp.com/webhooks/payments", // Optional
